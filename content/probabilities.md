@@ -12,7 +12,6 @@ How do we determine whether it’s time to commit?
 1. Code Reviews
 1. A hunch on the unknown risk?
 
-
 The hunch is crucial, years of getting it wrong helps build an intuition for the level of risk in the unknown unknowns and whether that risk is acceptable. But our otherwise sound intuition is easily derailed: tiredness, pressure, mood, frustration, recent success or failures or just plain joy at getting a tricky bit of code apparently working, all have an effect. “The emotional tail wags the rational dog.”
 
 So what if we took a more data driven approach to this crucial decision? What factors should we consider and how can we measure them?
@@ -21,7 +20,6 @@ So what if we took a more data driven approach to this crucial decision? What fa
 1. The size of the change - The more code changed the more likely a bug has been introduced
 1. The complexity of the change - Some types of code are much more likely to contain bugs than others. We can classify types of code and factor these into our calculation. 
 1. The quality of the repository - However solid your code is, if it’s sitting on shaky foundations it’s much harder to make a change without causing undesirable side effects. We can measure this by the ratio of fixes made in a commit history.
-
 
 Developing a formula for this is complex, the impact of each factor will vary for each repo, and the factors influence each other. Luckily this is the kind of problem that machine learning excels at. At SoLittleCode we’ve been working on this problem for the last year and are now able to calculate probabilities of a bug in a commit with around 70% accuracy. 
 
