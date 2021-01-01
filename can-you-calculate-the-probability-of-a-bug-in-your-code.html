@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <title>SoLittleCode Blog - Can you calculate the probability of a bug in your code?</title>
+    <link rel="stylesheet" type="text/css" href="/theme/css/style.css" />
+    <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="SoLittleCode Blog Atom Feed" />
+
+
+
+
+
+  </head>
+
+  <body id="index" class="home">
+    <header id="banner" class="body">
+      <div class="clearfix p-4">
+        <div class="float-left">
+          <a href="https://www.solittlecode.com">
+            <h1 class="text-gray-dark logo">SoLittleCode</h1>
+          </a>
+        </div>
+        <nav class="float-right">
+          <a href="https://www.solittlecode.com/reviewml">ReviewML | </a>
+          <a href="https://blog.solittlecode.com">Blog | </a>
+          <a href="https://www.solittlecode.com/contact">Contact </a>
+        </nav>
+      </div>        
+    </header>
+    <div class="container-md px-2 py-4">
+<section id="content" class="body">
+  <header class="Subhead Subhead--spacious">
+    <h2 class="Subhead-heading logo">
+        <a href="/can-you-calculate-the-probability-of-a-bug-in-your-code.html" rel="bookmark" title="Permalink to Can you calculate the probability of a bug in your code?">Can you calculate the probability of a bug in your code?</a>
+    </h2> 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2020-12-29T00:00:00+01:00">
+      Tue 29 December 2020
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="/author/tom-howlett.html">Tom Howlett</a>
+    </address>
+  </footer><!-- /.post-info -->
+  <div class="entry-content pt-2">
+    <p>TLDR: Yes, here’s how</p>
+<p>Every code commit or merge is one of the critical decision points that determine whether you're helping or hindering progress. Getting it right is the difference between your customers cheering or crying over your next deploy.</p>
+<p>How do we determine whether it’s time to commit?</p>
+<ol>
+<li>Testing</li>
+<li>Code Reviews</li>
+<li>A hunch on the unknown risk?</li>
+</ol>
+<p>The hunch is crucial, years of getting it wrong helps build an intuition for the level of risk in the unknown unknowns and whether that risk is acceptable. But our otherwise sound intuition is easily derailed: tiredness, pressure, mood, frustration, recent success or failures or just plain joy at getting a tricky bit of code apparently working, all have an effect. “The emotional tail wags the rational dog.”</p>
+<p>So what if we took a more data driven approach to this crucial decision? What factors should we consider and how can we measure them?</p>
+<ol>
+<li>The developer - Historically what are the odds that a developer will have a bug in their code</li>
+<li>The size of the change - The more code changed the more likely a bug has been introduced</li>
+<li>The complexity of the change - Some types of code are much more likely to contain bugs than others. We can classify types of code and factor these into our calculation. </li>
+<li>The quality of the repository - However solid your code is, if it’s sitting on shaky foundations it’s much harder to make a change without causing undesirable side effects. We can measure this by the ratio of fixes made in a commit history.</li>
+</ol>
+<p>Developing a formula for this is complex, the impact of each factor will vary for each repo, and the factors influence each other. Luckily this is the kind of problem that machine learning excels at. At SoLittleCode we’ve been working on this problem for the last year and are now able to calculate probabilities of a bug in a commit with around 70% accuracy. </p>
+<p>Once you know the probability of a bug in your code what should you do about it? With a model capable of calculating the probability of a bug with any developer on the team committing that code, we can calculate whose review is most likely to find the issue. The following screenshot is what our tool adds to a PR when I try to make a change to a fork of Angular.
+<img alt="PR Review Image" src="/images/reviewml-screenshot.png">
+I guess I’m not quite ready to start coding for Google! </p>
+<p>If you’d like to discuss other ways of using this technology please let me know.</p>
+  </div><!-- /.entry-content -->
+</section>
+    </div>
+  </body>
+</html>
