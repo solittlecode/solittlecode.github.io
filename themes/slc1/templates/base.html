@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="{% block html_lang %}{{ DEFAULT_LANG }}{% endblock html_lang %}">
+  <head>
+    {% block head %}
+    <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <title>{% block title %}{{ SITENAME }}{%endblock%}</title>
+    <link rel="stylesheet" type="text/css" href="{{ SITEURL }}/theme/css/style.css" />
+    {% if FEED_ALL_ATOM %}
+    <link href="{{ FEED_DOMAIN }}/{% if FEED_ALL_ATOM_URL %}{{ FEED_ALL_ATOM_URL }}{% else %}{{ FEED_ALL_ATOM }}{% endif %}" type="application/atom+xml" rel="alternate" title="{{ SITENAME }} Atom Feed" />
+    {% endif %}
+    {% if FEED_ALL_RSS %}
+    <link href="{{ FEED_DOMAIN }}/{% if FEED_ALL_RSS_URL %}{{ FEED_ALL_RSS_URL }}{% else %}{{ FEED_ALL_RSS }}{% endif %}" type="application/rss+xml" rel="alternate" title="{{ SITENAME }} RSS Feed" />
+    {% endif %}
+    {% block extra_head %}{% endblock extra_head %}
+    {% endblock head %}
+  </head>
+
+  <body id="index" class="home">
+    <header id="banner" class="body">
+      <div class="clearfix p-4">
+        <div class="float-left">
+          <h1 class="text-gray-dark logo"><a href="{{ SITEURL }}/"></a>SoLittleCode</h1></a></h1>
+        </div>
+        <nav class="float-right">
+          <a class="btn btn-sm btn-outline m-2" @click="authLink">Dashboard</a>
+          <a href="/reviewml">ReviewML | </a>
+          <a href="/contact">Contact </a>
+        </nav>
+      </div>        
+    </header>
+    <div class="container-md px-2 py-4">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </body>
+</html>
