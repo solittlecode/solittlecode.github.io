@@ -4,6 +4,7 @@
     {% block head %}
     <meta charset="utf-8" />
     <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>{% block title %}{{ SITENAME }}{%endblock%}</title>
     <link rel="stylesheet" type="text/css" href="{{ SITEURL }}/theme/css/style.css" />
     {% if FEED_ALL_ATOM %}
@@ -14,6 +15,14 @@
     {% endif %}
     {% block extra_head %}{% endblock extra_head %}
     {% endblock head %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V52BTX8N5R"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-V52BTX8N5R');
+    </script>
   </head>
 
   <body id="index" class="home">
