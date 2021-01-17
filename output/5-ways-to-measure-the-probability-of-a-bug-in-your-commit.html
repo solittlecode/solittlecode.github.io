@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SoLittleCode Blog - 5 Ways to Measure the probability of a bug in your commit</title>
+    <link rel="stylesheet" type="text/css" href="/theme/css/style.css" />
+
+
+
+
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V52BTX8N5R"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-V52BTX8N5R');
+    </script>
+  </head>
+
+  <body id="index" class="home">
+    <header id="banner" class="body">
+      <div class="clearfix p-4">
+        <div class="float-left">
+          <a href="https://www.solittlecode.com">
+            <h1 class="text-gray-dark logo">SoLittleCode</h1>
+          </a>
+        </div>
+        <nav class="float-right">
+          <a href="https://www.solittlecode.com/reviewml">ReviewML | </a>
+          <a href="https://blog.solittlecode.com">Blog | </a>
+          <a href="https://www.solittlecode.com/contact">Contact </a>
+        </nav>
+      </div>        
+    </header>
+    <div class="container-md px-2 py-4">
+<section id="content" class="body">
+  <header class="Subhead Subhead--spacious">
+    <h1 class="Subhead-heading">
+        <a href="/5-ways-to-measure-the-probability-of-a-bug-in-your-commit.html" rel="bookmark" title="Permalink to 5 Ways to Measure the probability of a bug in your commit">5 Ways to Measure the probability of a bug in your commit</a>
+    </h1> 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2021-01-17T00:00:00+01:00">
+      Sun 17 January 2021
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="/author/tom-howlett.html">Tom Howlett</a>
+    </address>
+  </footer><!-- /.post-info -->
+  <div class="entry-content pt-2">
+    <h2>Why?</h2>
+<p>Every commit has a risk but that risk varies. Teams go through a process to reduce that risk but it's often the same process, whether it's a single line code change or vast refactor. By quantifying the risk based on previous similar commits we know when it's worth spending a bit more care than usual. Most teams rely on their intuition to estimate the risk but our cognitive biases can lead us astray. Stats can help with that. </p>
+<h2>The Data</h2>
+<p>For this example I've run some analysis on <a href="https://github.com/SonarSource/sonarqube">SonarQube</a>. Most developers will have coma across them, but if you haven't SonarQube is a popular static analysis tool for finding bugs and security issues in repos. It's an interesting repo because it appears to have a low defect rate (2 issues per 1000 lines of code added) and small variance between developers. It looks like they eat there own dog food and deliver some very high quality code. </p>
+<p><img alt="SonarQube Author Distribution" src="/images/sonarqube_analysis.png"></p>
+<p>I extracted more than 20,0000 commits spanning the last 10 years, shuffled them, and split them 60/40 into a training and test set. For each commit I've extracted the author, the lines of code added and tokenised the code for use in the machine learning methods later in the article. </p>
+<h3>A baseline: Linear Regession on Lines of Code added</h3>
+<p><img alt="PR Review Image" src="/images/aspnetcore_analysis.png"></p>
+<h3>Fitting a Curve</h3>
+<p><img alt="PR Review Image" src="/images/Angular_analysis.png"></p>
+<h3>Developers are different: A curve for each</h3>
+<h3>A bit of AI: A basic Neural Network</h3>
+<p>Neural Networks create different representations of the data. </p>
+<h3>A bit more AI: A Convnet</h3>
+<p>I've created <a href="https://www.solittlecode.com/reviewml">ReviewML</a> to help.</p>
+  </div><!-- /.entry-content -->
+</section>
+    </div>
+  </body>
+</html>
