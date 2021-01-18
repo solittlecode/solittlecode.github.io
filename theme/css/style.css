@@ -1,5 +1,19 @@
 @import "primer.css";
+@import "pygment.css";
 @import url('https://fonts.googleapis.com/css2?family=Nothing+You+Could+Do&display=swap');
+
+table {
+  margin: 10px 0;
+}
+
+table, th, td {
+  border: 1px solid #6a737d;
+
+}
+
+th, td {
+  padding: 5px;
+}
 
 ul, ol{
     margin:14px;

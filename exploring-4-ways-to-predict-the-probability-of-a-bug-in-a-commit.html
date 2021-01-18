@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8" />
+    <meta name="generator" content="Pelican" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SoLittleCode Blog - Exploring 4 Ways to Predict the Probability of a Bug in a Commit</title>
+    <link rel="stylesheet" type="text/css" href="/theme/css/style.css" />
+    <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="SoLittleCode Blog Atom Feed" />
+
+
+
+
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V52BTX8N5R"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-V52BTX8N5R');
+    </script>
+  </head>
+
+  <body id="index" class="home">
+    <header id="banner" class="body">
+      <div class="clearfix p-4">
+        <div class="float-left">
+          <a href="https://www.solittlecode.com">
+            <h1 class="text-gray-dark logo">SoLittleCode</h1>
+          </a>
+        </div>
+        <nav class="float-right">
+          <a href="https://www.solittlecode.com/reviewml">ReviewML | </a>
+          <a href="https://blog.solittlecode.com">Blog | </a>
+          <a href="https://www.solittlecode.com/contact">Contact </a>
+        </nav>
+      </div>        
+    </header>
+    <div class="container-md px-2 py-4">
+<section id="content" class="body">
+  <header class="Subhead Subhead--spacious">
+    <h1 class="Subhead-heading">
+        <a href="/exploring-4-ways-to-predict-the-probability-of-a-bug-in-a-commit.html" rel="bookmark" title="Permalink to Exploring 4 Ways to Predict the Probability of a Bug in a Commit">Exploring 4 Ways to Predict the Probability of a Bug in a Commit</a>
+    </h1> 
+  </header>
+  <footer class="post-info">
+    <time class="published" datetime="2021-01-17T00:00:00+01:00">
+      Sun 17 January 2021
+    </time>
+    <address class="vcard author">
+      By           <a class="url fn" href="/author/tom-howlett.html">Tom Howlett</a>
+    </address>
+  </footer><!-- /.post-info -->
+  <div class="entry-content pt-2">
+    <p>Every commit has a risk, but can you quantify it? Teams go through a process to reduce risk, but whether it's a single line code change or vast refactor, the process is often the same. Quantifying the risk based on previous similar commits can help us decide whether it's worth taking some extra steps. Experienced teams have good intuition when deciding whether they've done enough, but cognitive biases can lead us astray. Stats can help with that, so in this article I share 4 methods of predicting the chance of a bug and compare the results.</p>
+<h2>The Data</h2>
+<p>For this example I've run some analysis on <a href="https://github.com/SonarSource/sonarqube">SonarQube</a>. Most developers will have come across this popular static analysis tool for finding bugs and security issues in code. It's an interesting repo because it appears to have a low defect rate (2 issues per 1000 lines of code added) and a small variance between developers. It looks like they eat their own dog food and deliver some very high quality code.</p>
+<p><img alt="SonarQube Author Distribution" src="/images/sonarqube_analysis.png"></p>
+<p>I extracted more than 20,0000 commits spanning the last 10 years, shuffled them, and split them 60/40 into a training and test set. For each commit I've extracted the author, a count of the lines of code added and tokenised the code for use in the machine learning methods later in the article. </p>
+<h3>A baseline: Linear Regression on Lines of Code Added</h3>
+<p>Bugs resides in code, so it follows that more code will increase the probability of more bugs. We can model this with linear regression using Numpy's polyfit function. This function derives the coefficients for least squares polynomial fit. We can specify the number of degrees to use and the coefficients can be passed to the poly1d function that returns a function we can use.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">#linear regression</span>
+<span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">f1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span>
+<span class="mf">0.001064</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">0.2746</span>
+</code></pre></div>
+
+<p>We can then use these functions to predict the probability of a bug in our test dataset and pass the results to a validator. For all these experiments I've used the BinaryAccuracy Validator in Keras for consistency.</p>
+<div class="highlight"><pre><span></span><code><span class="n">validator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">BinaryAccuracy</span><span class="p">()</span>
+<span class="n">validator</span><span class="o">.</span><span class="n">update_state</span><span class="p">(</span><span class="n">ytest</span><span class="p">,</span> <span class="n">f1</span><span class="p">(</span><span class="n">xtest</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;f1:&#39;</span><span class="p">,</span><span class="n">validator</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="n">f1</span><span class="p">:</span> <span class="mf">0.69960284</span>
+</code></pre></div>
+
+<p>These methods give us 69-72% Accuracy. It's a good place to start</p>
+<table>
+<thead>
+<tr>
+<th align="left">Degree Polynomial</th>
+<th align="left">Function</th>
+<th align="left">Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">1st</td>
+<td align="left">0.001064x + 0.2746</td>
+<td align="left">70%</td>
+</tr>
+<tr>
+<td align="left">2nd</td>
+<td align="left">-2.424e-06x² + 0.002654x + 0.2112</td>
+<td align="left">71.6%</td>
+</tr>
+<tr>
+<td align="left">3rd</td>
+<td align="left">5.956e-09x³ - 9.318e-06x² + 0.004362x + 0.1732</td>
+<td align="left">72.2%</td>
+</tr>
+</tbody>
+</table>
+<p>Here's the curves. It's interesting to see that on the 3rd Degree Polynomial there is a relatively flat section between 200-700 Lines of Code Added (LOCA) and then a rapid rise in risk. This might suggest that after 700 LOCA the commit becomes to large for us to safely comprehend and we miss problems.</p>
+<p><img alt="PR Review Image" src="/images/charts/regression.png"></p>
+<h3>Developers are different: A Curve for each Committer</h3>
+<p>From the histogram at the beginning of this post we can see that although the variance between developers is relatively low at Sonar it's still significant, and if we factor this into a model we should see a more accurate result. The code below creates a function for every developer with over 100 commits and defaults to the general case for those with less. </p>
+<div class="highlight"><pre><span></span><code><span class="n">authors</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">author</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">train_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;author&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">locadd</span><span class="p">,</span> <span class="n">group</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">function</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span>
+        <span class="n">authors</span><span class="p">[</span><span class="n">author</span><span class="p">]</span> <span class="o">=</span> <span class="n">function</span>
+
+<span class="k">def</span> <span class="nf">auth_specific</span><span class="p">(</span><span class="n">author</span><span class="p">,</span> <span class="n">locadd</span><span class="p">):</span>
+    <span class="n">author_func</span> <span class="o">=</span> <span class="n">authors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">author</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">author_func</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">author_func</span><span class="p">(</span><span class="n">locadd</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f3</span><span class="p">(</span><span class="n">locadd</span><span class="p">)</span>
+
+<span class="n">test_predicted</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">test_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">test_predicted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">auth_specific</span><span class="p">(</span><span class="n">commit</span><span class="p">[</span><span class="s1">&#39;author&#39;</span><span class="p">],</span> <span class="n">commit</span><span class="p">[</span><span class="s1">&#39;locadd&#39;</span><span class="p">]))</span>
+
+
+<span class="n">validator</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">BinaryAccuracy</span><span class="p">()</span>
+<span class="n">validator</span><span class="o">.</span><span class="n">update_state</span><span class="p">(</span><span class="n">test_df</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">],</span> <span class="n">test_predicted</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;auth_specific:&#39;</span><span class="p">,</span><span class="n">validator</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+<span class="n">auth_specific</span><span class="p">:</span> <span class="mf">0.7364434</span>
+</code></pre></div>
+
+<p>In this case this strategy doesn't improve the overall accuracy of our predictions. In fact in most repos that I tried this on it performed worse than a single 3rd Degree Polynomial. The only exceptions are where there is a very large variance (&gt;100:1) between the rate that developers create bugs.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Degree Polynomial</th>
+<th align="left">Function</th>
+<th align="left">Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">3rd</td>
+<td align="left">Bespoke per committer</td>
+<td align="left">70%</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="PR Review Image" src="/images/charts/author_regression.png"></p>
+<h3>A bit of AI: A basic Neural Network</h3>
+<p>So far we've only considered the size of the commit and the author but another factor we should consider is the type of code that was changed. Finding useful representations in unstructured code data is a job for machine learning, in this case we'll use Neural Networks (NN) and Natural Language Processing (NLP) techniques. </p>
+<p>First up is a basic NLP Neural Network using word embeddings, a flatten and a single dense layer. The training sequences passed contain sequences for a string that starts with the author and then includes all the code in the commit. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Embedding</span><span class="p">,</span> <span class="n">Dropout</span>
+
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Embedding</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">word_index</span><span class="p">),</span> <span class="mi">16</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="mi">10000</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Flatten</span><span class="p">())</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">RMSprop</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.00001</span><span class="p">),</span> 
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> 
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">BinaryAccuracy</span><span class="p">()])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">train_sequences</span><span class="p">,</span> <span class="n">data_sonar</span><span class="o">.</span><span class="n">train_labels</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.33</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">test_sequences</span><span class="p">,</span> <span class="n">data_sonar</span><span class="o">.</span><span class="n">test_labels</span><span class="p">)</span>
+</code></pre></div>
+
+<p>This gives us an accuracy of <strong>73%</strong>. It's marginally the best yet. It's a great starting point for machine learning. Lets try something a bit more sophisticated. </p>
+<h3>A Bit More AI: A Convnet</h3>
+<p>Finally lets try a Convnet. Convnets or Convolutional Neural Networks are commonly used for image recognition but can but can perform well on text sequences. They work in a similar way to the neurons in our visual cortex by finding abstractions and passing these simpler representations to the next layer. It's possible that they may discover patterns in code that can increase the probability of a bug. Lets give it a try...</p>
+<div class="highlight"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Embedding</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">word_index</span><span class="p">),</span> <span class="mi">128</span><span class="p">,</span> <span class="n">input_length</span><span class="o">=</span><span class="mi">10000</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv1D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">MaxPool1D</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv1D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">layers</span><span class="o">.</span><span class="n">GlobalMaxPool1D</span><span class="p">())</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">RMSprop</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> 
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> 
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">BinaryAccuracy</span><span class="p">()])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">train_sequences</span><span class="p">,</span> <span class="n">data_sonar</span><span class="o">.</span><span class="n">train_labels</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.33</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data_sonar</span><span class="o">.</span><span class="n">test_sequences</span><span class="p">,</span> <span class="n">data_sonar</span><span class="o">.</span><span class="n">test_labels</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The result of this simple implementation on the SonarQube repo is again 73%. On other repos it shows an improvement over the simple Neural Network, with more tuning I'm expecting it to perform much better. The hard thing about machine learning is we don't know how this is working. Could it be considering code complexity, or perhaps it's doing little more than our polynomials? </p>
+<h3>Conclusion</h3>
+<p>To ensure these results can be replicated across other repos I've run the same tests on 3 other repos achieving similar results. </p>
+<table>
+<thead>
+<tr>
+<th align="left">Repo</th>
+<th align="left">Linear Regression</th>
+<th align="left">2D Polynomial</th>
+<th align="left">3D Polynomial</th>
+<th align="left">Author Bespoke Polynomial</th>
+<th align="left">Simple NN</th>
+<th align="left">Convnet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">SonarQube</td>
+<td align="left">69%</td>
+<td align="left">71%</td>
+<td align="left">72%</td>
+<td align="left">70%</td>
+<td align="left">73%</td>
+<td align="left">73%</td>
+</tr>
+<tr>
+<td align="left">AspNet Core</td>
+<td align="left">75%</td>
+<td align="left">76%</td>
+<td align="left">77%</td>
+<td align="left">77%</td>
+<td align="left">80%</td>
+<td align="left">80%</td>
+</tr>
+<tr>
+<td align="left">Angular</td>
+<td align="left">67%</td>
+<td align="left">70%</td>
+<td align="left">72%</td>
+<td align="left">70%</td>
+<td align="left">73%</td>
+<td align="left">74%</td>
+</tr>
+<tr>
+<td align="left">React</td>
+<td align="left">65%</td>
+<td align="left">69%</td>
+<td align="left">71%</td>
+<td align="left">69%</td>
+<td align="left">72%</td>
+<td align="left">74%</td>
+</tr>
+</tbody>
+</table>
+<p>Bugs are hard to predict, but when we raise awareness of the risk before the damage is done, we can save a lot of pain later and increase development flow. Whilst these simple machine learning approaches don't offer large advantages over a statistical approach, they do seem to have the potential to recognise patterns of risky code which should significantly raise accuracy of predictions. If you're interested in exploring this further on your repos please get in touch or try <a href="https://www.solittlecode.com/reviewml">ReviewML</a>.</p>
+  </div><!-- /.entry-content -->
+</section>
+    </div>
+  </body>
+</html>
